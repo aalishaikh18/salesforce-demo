@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        /* Two-column layout styles */
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #0052a3;
+        }
+        .status-display {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+        }
+        h1 {
+            color: #0066cc;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loader-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0066cc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Status-specific styles */
+        .status-DIP { background-color: #e3f2fd; color: #0d47a1; }
+        .status-FMA { background-color: #fff3e0; color: #e65100; }
+        .status-Verification { background-color: #f3e5f5; color: #7b1fa2; }
+        .status-Valuation { background-color: #e8f5e9; color: #2e7d32; }
+        .status-Offer { background-color: #e0f2f1; color: #00695c; }
+        .status-Conveyancing { background-color: #f3e5f5; color: #6a1b9a; }
+        .status-Booked { background-color: #fff3e0; color: #e65100; }
+        .status-Complete { background-color: #e8f5e9; color: #1b5e20; }
+
+        #currentStatus {
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        /* Progress Bar Styles */
+        .progress-bar-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 30px;
+        }
+        .progress-steps::before {
+            content: '';
+            background-color: #ddd;
+            position: absolute;
+            top: 15px;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            z-index: 1;
+        }
+        .progress-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            width: 40px;
+        }
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border: 4px solid #ddd;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #666;
+        }
+        .step-text {
+            font-size: 12px;
+            margin-top: 8px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            color: #666;
+        }
+        .progress-step.active .step-circle {
+            border-color: #0066cc;
+            background-color: #0066cc;
+            color: white;
+        }
+        .progress-step.active .step-text {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        .progress-step.completed .step-circle {
+            background-color: #0066cc;
+            border-color: #0066cc;
+            color: white;
+        }
+        .progress-step.completed ~ .progress-step .step-circle {
+            border-color: #ddd;
+            background-color: white;
+            color: #666;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .form-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar-container">
+        <div class="progress-steps">
+            <div class="progress-step active" data-step="Decision in Principle">
+                <div class="step-circle">1</div>
+                <div class="step-text">DIP</div>
+            </div>
+            <div class="progress-step" data-step="Full Mortgage Application">
+                <div class="step-circle">2</div>
+                <div class="step-text">FMA</div>
+            </div>
+            <div class="progress-step" data-step="Verification & Underwriting">
+                <div class="step-circle">3</div>
+                <div class="step-text">Verification</div>
+            </div>
+            <div class="progress-step" data-step="Valuation">
+                <div class="step-circle">4</div>
+                <div class="step-text">Valuation</div>
+            </div>
+            <div class="progress-step" data-step="Offer">
+                <div class="step-circle">5</div>
+                <div class="step-text">Offer</div>
+            </div>
+            <div class="progress-step" data-step="Conveyancing">
+                <div class="step-circle">6</div>
+                <div class="step-text">Conveyancing</div>
+            </div>
+            <div class="progress-step" data-step="Booked">
+                <div class="step-circle">7</div>
+                <div class="step-text">Booked</div>
+            </div>
+            <div class="progress-step" data-step="Complete">
+                <div class="step-circle">8</div>
+                <div class="step-text">Complete</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="logo-container">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgODAiPjxwYXRoIGZpbGw9IiMwMDY2Y2MiIGQ9Ik00NS4yIDEwLjZjLTEuOCAwLTMuMyAxLjUtMy4zIDMuM3YyNi4yYzAgMS44IDEuNSAzLjMgMy4zIDMuM2gxNDkuNmMxLjggMCAzLjMtMS41IDMuMy0zLjNWMTMuOWMwLTEuOC0xLjUtMy4zLTMuMy0zLjNINDUuMnptMCA1aDE0OS42djIzLjhINDUuMlYxNS42eiIvPjx0ZXh0IHg9IjYwIiB5PSIzMiIgZmlsbD0iIzAwNjZjYyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iYm9sZCI+TkZpbmFuY2lhbCBNb3J0Z2FnZXM8L3RleHQ+PHBhdGggZmlsbD0iIzAwNjZjYyIgZD0iTTQ1IDQ1aDE1MHYyNUg0NXoiLz48dGV4dCB4PSI3MCIgeT0iNjIiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCI+U2VjdXJpbmcgeW91ciBkcmVhbSBob21lPC90ZXh0Pjwvc3ZnPg==" 
+                 alt="NFinancial Mortgages Logo" 
+                 class="logo">
+        </div>
+        <h1>Mortgage Application</h1>
+        <form id="mortgageForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Full Name:</label>
+                    <input type="text" id="name" required placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label for="salary">Annual Salary:</label>
+                    <input type="number" id="salary" required placeholder="Enter your annual salary">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="amount">Mortgage Amount:</label>
+                    <input type="number" id="amount" required placeholder="Enter desired mortgage amount">
+                </div>
+                <div class="form-group">
+                    <label for="dependants">Number of Dependants:</label>
+                    <input type="number" id="dependants" min="0" required placeholder="Enter number of dependants">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">Status:</label>
+                    <select id="status" disabled>
+                        <option value="Decision in Principle">Decision in Principle</option>
+                        <option value="Full Mortgage Application">Full Mortgage Application</option>
+                        <option value="Verification & Underwriting">Verification & Underwriting</option>
+                        <option value="Valuation">Valuation</option>
+                        <option value="Offer">Offer</option>
+                        <option value="Conveyancing">Conveyancing</option>
+                        <option value="Booked">Booked</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit">Submit Application</button>
+        </form>
+        
+        <div class="loader" id="loader">
+            <div class="loader-spinner"></div>
+            <p>Processing your application...</p>
+        </div>
+
+        <div class="status-display">
+            <h3>Application Status: <span id="currentStatus">Not Submitted</span></h3>
+        </div>
+    </div>
+    <script>
+        const SALESFORCE_INSTANCE = 'https://nfinancial20250116092207779.my.salesforce.com';
+        const ACCESS_TOKEN = '00Da3000002CKpr!AQEAQGpOq3S6nvcJFFUmAkOI3yfobNURYICpjm6xMbjDfboJllK2woAxYoxHiqnuJ5Ym65q4iZdCrv3kSsO4Tf0HD76nji6m'; // Your access token here
+
+       function updateStatusDisplay(status) {
+    const statusElement = document.getElementById('currentStatus');
+    statusElement.textContent = status;
+    
+    // Remove all existing status classes
+    statusElement.classList.remove(
+        'status-DIP', 
+        'status-FMA', 
+        'status-Verification',
+        'status-Valuation',
+        'status-Offer',
+        'status-Conveyancing',
+        'status-Booked',
+        'status-Complete'
+    );
+    
+    // Add appropriate status class
+    switch(status) {
+        case 'Decision in Principle':
+            statusElement.classList.add('status-DIP');
+            break;
+        case 'Full Mortgage Application':
+            statusElement.classList.add('status-FMA');
+            break;
+        case 'Verification & Underwriting':
+            statusElement.classList.add('status-Verification');
+            break;
+        case 'Valuation':
+            statusElement.classList.add('status-Valuation');
+            break;
+        case 'Offer':
+            statusElement.classList.add('status-Offer');
+            break;
+        case 'Conveyancing':
+            statusElement.classList.add('status-Conveyancing');
+            break;
+        case 'Booked':
+            statusElement.classList.add('status-Booked');
+            break;
+        case 'Complete':
+            statusElement.classList.add('status-Complete');
+            break;
+    }
+
+    // Update select dropdown
+    document.getElementById('status').value = status;
+    
+    // Update progress bar
+    updateProgressBar(status);
+}
+function updateProgressBar(status) {
+    const steps = document.querySelectorAll('.progress-step');
+    const statusOptions = Array.from(document.getElementById('status').options)
+        .map(option => option.value);
+    const currentIndex = statusOptions.indexOf(status);
+
+    // Update progress bar steps
+    steps.forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+        
+        // Get step's status from data attribute
+        const stepStatus = step.getAttribute('data-step');
+        const stepIndex = statusOptions.indexOf(stepStatus);
+
+        if (stepIndex < currentIndex) {
+            // Previous steps should be marked as completed
+            step.classList.add('completed');
+        } else if (stepIndex === currentIndex) {
+            // Current step should be marked as active
+            step.classList.add('active');
+        }
+
+        // Update the line color between steps by modifying the ::before pseudo-element
+        if (stepIndex <= currentIndex) {
+            step.style.borderColor = '#0066cc';
+        } else {
+            step.style.borderColor = '#ddd';
+        }
+    });
+
+    // Update the progress line
+    const progressLine = document.querySelector('.progress-steps::before');
+    if (progressLine) {
+        const progress = ((currentIndex + 1) / steps.length) * 100;
+        progressLine.style.background = `linear-gradient(to right, #0066cc ${progress}%, #ddd ${progress}%)`;
+    }
+}
+
+        async function pollLoanStatus(loanId) {
+            try {
+                const response = await fetch(
+                    `${SALESFORCE_INSTANCE}/services/data/v57.0/sobjects/LLC_BI__Loan__c/${loanId}?fields=LLC_BI__Stage__c`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
+                const result = await response.json();
+                if (result.LLC_BI__Stage__c) {
+                    updateStatusDisplay(result.LLC_BI__Stage__c);
+                }
+                return result.LLC_BI__Stage__c;
+            } catch (error) {
+                console.error('Error polling status:', error);
+            }
+        }
+
+        async function createRecords(formData) {
+            const compositeRequest = {
+                allOrNone: true,
+                compositeRequest: [
+                    {
+                        method: 'POST',
+                        url: '/services/data/v57.0/sobjects/Account',
+                        referenceId: 'newAccount',
+                        body: {
+                            Name: formData.name
+                        }
+                    },
+                    {
+                        method: 'POST',
+                        url: '/services/data/v57.0/sobjects/LLC_BI__Loan__c',
+                        referenceId: 'newLoan',
+                        body: {
+                            Name: formData.name,
+                            LLC_BI__Account__c: '@{newAccount.id}',
+                            LLC_BI__Product_Line__c: 'Mortgage',
+                            LLC_BI__Product_Type__c: 'Residential',
+                            Transaction_Type__c: 'Purchase',
+                            Salary__c: formData.salary,
+                            LLC_BI__Amount__c: formData.amount,
+                            Dependants__c: formData.dependants,
+                            LLC_BI__Stage__c: 'Decision in Principle'
+                        }
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(`${SALESFORCE_INSTANCE}/services/data/v57.0/composite`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(compositeRequest)
+                });
+
+                const result = await response.json();
+                
+                if (result.compositeResponse.every(resp => resp.httpStatusCode === 201)) {
+                    return {
+                        success: true,
+                        loanId: result.compositeResponse[1].body.id
+                    };
+                } else {
+                    throw new Error('Failed to create records');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('mortgageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitButton = document.querySelector('button[type="submit"]');
+            const loader = document.getElementById('loader');
+            
+            // Disable submit button and show loader
+            submitButton.disabled = true;
+            loader.style.display = 'block';
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                salary: document.getElementById('salary').value,
+                amount: document.getElementById('amount').value,
+                dependants: document.getElementById('dependants').value
+            };
+
+            try {
+                const result = await createRecords(formData);
+                if (result.success) {
+                    updateStatusDisplay('Decision in Principle');
+                    alert('Application submitted successfully!');
+                    
+                    // Start polling for status updates
+                    setInterval(() => pollLoanStatus(result.loanId), 5000);
+                }
+            } catch (error) {
+                alert('An error occurred while submitting the application.');
+            } finally {
+                // Re-enable submit button and hide loader
+                submitButton.disabled = false;
+                loader.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
